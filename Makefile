@@ -9,6 +9,7 @@ run:
 
 proto:
 	protoc --go_out=./account/pb --go_opt=paths=source_relative --go-grpc_out=./account/pb --go-grpc_opt=paths=source_relative --proto_path=./account account.proto
+	protoc --go_out=./product/pb --go_opt=paths=source_relative --go-grpc_out=./product/pb --go-grpc_opt=paths=source_relative --proto_path=./product product.proto
 
 # Docker targets - Database
 db-build:
