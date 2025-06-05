@@ -10,6 +10,7 @@ run:
 proto:
 	protoc --go_out=./account/pb --go_opt=paths=source_relative --go-grpc_out=./account/pb --go-grpc_opt=paths=source_relative --proto_path=./account account.proto
 	protoc --go_out=./product/pb --go_opt=paths=source_relative --go-grpc_out=./product/pb --go-grpc_opt=paths=source_relative --proto_path=./product product.proto
+	protoc --go_out=./order/pb --go_opt=paths=source_relative --go-grpc_out=./order/pb --go-grpc_opt=paths=source_relative --proto_path=./order order.proto
 
 # Docker targets - Database
 db-build:
@@ -128,40 +129,40 @@ test-queries:
 # Migration targets for account service
 migrate-create:
 	@if [ -z "$(name)" ]; then echo "Usage: make migrate-create name=migration_name"; exit 1; fi
-	migrate create -ext sql -dir account/migrations -seq $(name)
+	migrate create -ext sql -dir $(dir)/migrations -seq $(name)
 
 migrate-up:
 	@if [ -z "$(DATABASE_URL)" ]; then echo "DATABASE_URL is required. Example: make migrate-up DATABASE_URL='postgres://user:password@localhost:5432/dbname?sslmode=disable'"; exit 1; fi
-	migrate -path account/migrations -database "$(DATABASE_URL)" up
+	migrate -path $(dir)/migrations -database "$(DATABASE_URL)" up
 
 migrate-down:
 	@if [ -z "$(DATABASE_URL)" ]; then echo "DATABASE_URL is required. Example: make migrate-down DATABASE_URL='postgres://user:password@localhost:5432/dbname?sslmode=disable'"; exit 1; fi
-	migrate -path account/migrations -database "$(DATABASE_URL)" down
+	migrate -path $(dir)/migrations -database "$(DATABASE_URL)" down
 
 migrate-up-by:
 	@if [ -z "$(DATABASE_URL)" ]; then echo "DATABASE_URL is required"; exit 1; fi
 	@if [ -z "$(steps)" ]; then echo "Usage: make migrate-up-by steps=N DATABASE_URL='...'"; exit 1; fi
-	migrate -path account/migrations -database "$(DATABASE_URL)" up $(steps)
+	migrate -path $(dir)/migrations -database "$(DATABASE_URL)" up $(steps)
 
 migrate-down-by:
 	@if [ -z "$(DATABASE_URL)" ]; then echo "DATABASE_URL is required"; exit 1; fi
 	@if [ -z "$(steps)" ]; then echo "Usage: make migrate-down-by steps=N DATABASE_URL='...'"; exit 1; fi
-	migrate -path account/migrations -database "$(DATABASE_URL)" down $(steps)
+	migrate -path $(dir)/migrations -database "$(DATABASE_URL)" down $(steps)
 
 migrate-force:
 	@if [ -z "$(DATABASE_URL)" ]; then echo "DATABASE_URL is required"; exit 1; fi
 	@if [ -z "$(version)" ]; then echo "Usage: make migrate-force version=VERSION DATABASE_URL='...'"; exit 1; fi
-	migrate -path account/migrations -database "$(DATABASE_URL)" force $(version)
+	migrate -path $(dir)/migrations -database "$(DATABASE_URL)" force $(version)
 
 migrate-version:
 	@if [ -z "$(DATABASE_URL)" ]; then echo "DATABASE_URL is required"; exit 1; fi
-	migrate -path account/migrations -database "$(DATABASE_URL)" version
+	migrate -path $(dir)/migrations -database "$(DATABASE_URL)" version
 
 migrate-drop:
 	@if [ -z "$(DATABASE_URL)" ]; then echo "DATABASE_URL is required"; exit 1; fi
 	@echo "WARNING: This will drop all tables and data!"
 	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ]
-	migrate -path account/migrations -database "$(DATABASE_URL)" drop -f
+	migrate -path $(dir)/migrations -database "$(DATABASE_URL)" drop -f
 
 migrate-help:
 	@echo "Migration Commands:"
