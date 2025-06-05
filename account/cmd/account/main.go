@@ -9,7 +9,7 @@ import (
 
 type config struct {
 	DatabaseURL string `envconfig:"DATABASE_URL" default:"postgres://postgres:postgres@localhost:5432/ecommerce_account?sslmode=disable"`
-	Port        int    `envconfig:"PORT" default:"50051"`
+	Port        int    `envconfig:"PORT" default:"8080"`
 }
 
 func main() {

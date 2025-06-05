@@ -11,5 +11,5 @@ FROM alpine:3.20
 RUN apk --no-cache add ca-certificates
 WORKDIR /usr/bin
 COPY --from=builder /go/bin/app .
-EXPOSE 50051
+EXPOSE 8080
 CMD ["./app"]
