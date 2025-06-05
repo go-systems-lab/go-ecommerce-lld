@@ -3,25 +3,30 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-const defaultPort = "8080"
+type AppConfig struct {
+	AccountServiceURL string `envconfig:"ACCOUNT_SERVICE_URL"`
+	ProductServiceURL string `envconfig:"PRODUCT_SERVICE_URL"`
+	OrderServiceURL   string `envconfig:"ORDER_SERVICE_URL"`
+	Port              string `envconfig:"PORT"`
+}
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
+	var cfg AppConfig
+	if err := envconfig.Process("", &cfg); err != nil {
+		log.Fatal(err)
 	}
 
-	s, err := NewGraphQLServer()
+	s, err := NewGraphQLServer(cfg.AccountServiceURL, cfg.ProductServiceURL, cfg.OrderServiceURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,6 +47,6 @@ func main() {
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
 }

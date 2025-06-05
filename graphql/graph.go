@@ -5,6 +5,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/go-systems-lab/go-ecommerce-lld/account"
+	"github.com/go-systems-lab/go-ecommerce-lld/order"
 	"github.com/go-systems-lab/go-ecommerce-lld/product"
 )
 
@@ -18,19 +19,28 @@ func getEnv(key, defaultValue string) string {
 type Server struct {
 	accountClient *account.Client
 	productClient *product.Client
+	orderClient   *order.Client
 }
 
-func NewGraphQLServer() (*Server, error) {
+func NewGraphQLServer(
+	accountServiceURL,
+	productServiceURL,
+	orderServiceURL string,
+) (*Server, error) {
 	// Connect to account service
-	accountServiceURL := getEnv("ACCOUNT_SERVICE_URL", "localhost:8080")
 	accountClient, err := account.NewClient(accountServiceURL)
 	if err != nil {
 		return nil, err
 	}
 
 	// Connect to product service
-	productServiceURL := getEnv("PRODUCT_SERVICE_URL", "localhost:8080")
 	productClient, err := product.NewClient(productServiceURL)
+	if err != nil {
+		return nil, err
+	}
+
+	// Connect to order service
+	orderClient, err := order.NewClient(orderServiceURL)
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +48,7 @@ func NewGraphQLServer() (*Server, error) {
 	return &Server{
 		accountClient: accountClient,
 		productClient: productClient,
+		orderClient:   orderClient,
 	}, nil
 }
 

@@ -2,7 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
+	"log"
+
+	"github.com/go-systems-lab/go-ecommerce-lld/order"
 )
+
+var ErrInvalidParameter = errors.New("invalid parameter")
 
 type mutationResolver struct {
 	server *Server
@@ -35,7 +41,26 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, product ProductInp
 	}, nil
 }
 
-func (r *mutationResolver) CreateOrder(ctx context.Context, order OrderInput) (*Order, error) {
-	// TODO: Implement
-	return nil, nil
+func (r *mutationResolver) CreateOrder(ctx context.Context, in OrderInput) (*Order, error) {
+	var products []order.OrderedProduct
+	for _, p := range in.Products {
+		if p.Quantity <= 0 {
+			return nil, ErrInvalidParameter
+		}
+		products = append(products, order.OrderedProduct{
+			ID:       p.ID,
+			Quantity: uint32(p.Quantity),
+		})
+	}
+	o, err := r.server.orderClient.PostOrder(ctx, in.AccountID, products)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return &Order{
+		ID:         o.ID,
+		CreatedAt:  o.CreatedAt,
+		TotalPrice: o.TotalPrice,
+	}, nil
 }

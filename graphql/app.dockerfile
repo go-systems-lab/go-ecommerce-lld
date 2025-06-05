@@ -5,6 +5,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY account account
 COPY product product
+COPY order order
 COPY graphql graphql
 COPY tools.go .
 RUN GO111MODULE=on go build -o /go/bin/app ./graphql
