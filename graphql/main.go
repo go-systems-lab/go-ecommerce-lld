@@ -10,7 +10,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/go-systems-lab/go-ecommerce-lld/graph"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -22,7 +21,12 @@ func main() {
 		port = defaultPort
 	}
 
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	s, err := NewGraphQLServer()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	srv := handler.New(s.toExecutableSchema())
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
