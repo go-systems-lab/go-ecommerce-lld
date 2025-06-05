@@ -1,12 +1,25 @@
 package main
 
-import "github.com/99designs/gqlgen/graphql"
+import (
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/go-systems-lab/go-ecommerce-lld/account"
+)
 
 type Server struct {
+	accountClient *account.Client
 }
 
 func NewGraphQLServer() (*Server, error) {
-	return &Server{}, nil
+	// Connect to account service
+	// TODO: Use env variable
+	accountClient, err := account.NewClient("localhost:50051")
+	if err != nil {
+		return nil, err
+	}
+
+	return &Server{
+		accountClient: accountClient,
+	}, nil
 }
 
 func (s *Server) Mutation() MutationResolver {
