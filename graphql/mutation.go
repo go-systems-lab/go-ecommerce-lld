@@ -22,8 +22,17 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, account AccountInp
 }
 
 func (r *mutationResolver) CreateProduct(ctx context.Context, product ProductInput) (*Product, error) {
-	// TODO: Implement
-	return nil, nil
+	createdProduct, err := r.server.productClient.PostProduct(ctx, product.Name, product.Description, product.Price)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Product{
+		ID:          createdProduct.ID,
+		Name:        createdProduct.Name,
+		Description: createdProduct.Description,
+		Price:       createdProduct.Price,
+	}, nil
 }
 
 func (r *mutationResolver) CreateOrder(ctx context.Context, order OrderInput) (*Order, error) {

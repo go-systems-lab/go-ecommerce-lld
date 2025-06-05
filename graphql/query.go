@@ -49,6 +49,55 @@ func (r *queryResolver) Accounts(ctx context.Context, pagination *PaginationInpu
 }
 
 func (r *queryResolver) Product(ctx context.Context, pagination *PaginationInput, query, id *string) ([]*Product, error) {
-	// TODO: Implement
-	return nil, nil
+	if id != nil {
+		product, err := r.server.productClient.GetProduct(ctx, *id)
+		if err != nil {
+			return nil, err
+		}
+		return []*Product{
+			{
+				ID:          product.ID,
+				Name:        product.Name,
+				Description: product.Description,
+				Price:       product.Price,
+			},
+		}, nil
+	}
+	skip, take := uint64(0), uint64(10)
+	if pagination != nil {
+		skip, take = pagination.bounds()
+	}
+
+	q := ""
+	if query != nil {
+		q = *query
+	}
+
+	products, err := r.server.productClient.GetProducts(ctx, skip, take, nil, q)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*Product
+	for _, p := range products {
+		result = append(result, &Product{
+			ID:          p.ID,
+			Name:        p.Name,
+			Description: p.Description,
+			Price:       p.Price,
+		})
+	}
+	return result, nil
+}
+
+func (p PaginationInput) bounds() (uint64, uint64) {
+	skipValue := uint64(0)
+	takeValue := uint64(100)
+	if p.Skip != 0 {
+		skipValue = uint64(p.Skip)
+	}
+	if p.Take != 0 {
+		takeValue = uint64(p.Take)
+	}
+	return skipValue, takeValue
 }
