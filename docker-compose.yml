@@ -58,6 +58,45 @@ services:
       - xpack.security.http.ssl.enabled=false
       - xpack.security.transport.ssl.enabled=false
 
+  order:
+    build:
+      context: .
+      dockerfile: ./order/app.dockerfile
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@order_db:5432/ecommerce_order?sslmode=disable
+      - ACCOUNT_URL=account:8080
+      - PRODUCT_URL=product:8080
+      - PORT=8080
+    depends_on:
+      - order_migrate
+    restart: on-failure
+  
+  order_db:
+    build:
+      context: .
+      dockerfile: ./order/db.dockerfile
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ecommerce_order
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ecommerce_order"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+  
+  order_migrate:
+    image: migrate/migrate
+    depends_on:
+      order_db:
+        condition: service_healthy
+    volumes:
+      - ./order/migrations:/migrations
+    command: ["-path", "/migrations/", "-database", "postgres://postgres:postgres@order_db:5432/ecommerce_order?sslmode=disable", "up"]
+
   graphql:
     build:
       context: .
@@ -70,4 +109,6 @@ services:
     environment:
       - ACCOUNT_SERVICE_URL=account:8080
       - PRODUCT_SERVICE_URL=product:8080
+      - ORDER_SERVICE_URL=order:8080
+      - PORT=8080
     restart: on-failure
