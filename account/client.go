@@ -13,11 +13,6 @@ type Client struct {
 	service pb.AccountServiceClient
 }
 
-type Account struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
 func NewClient(url string) (*Client, error) {
 	conn, err := grpc.NewClient(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -36,17 +31,24 @@ func (c *Client) Close() {
 	c.conn.Close()
 }
 
-func (c *Client) PostAccount(ctx context.Context, name string) (*Account, error) {
-	r, err := c.service.PostAccount(ctx, &pb.PostAccountRequest{Name: name})
+func (c *Client) Register(ctx context.Context, name, email, password string) (string, error) {
+	r, err := c.service.RegisterAccount(ctx, &pb.RegisterRequest{Name: name, Email: email, Password: password})
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return &Account{
-		ID:   r.Account.GetId(),
-		Name: r.Account.GetName(),
-	}, nil
+	return r.Token, nil
+}
+
+func (c *Client) Login(ctx context.Context, email, password string) (string, error) {
+	r, err := c.service.LoginAccount(ctx, &pb.LoginRequest{Email: email, Password: password})
+
+	if err != nil {
+		return "", err
+	}
+
+	return r.Token, nil
 }
 
 func (c *Client) GetAccount(ctx context.Context, id string) (*Account, error) {
@@ -57,8 +59,9 @@ func (c *Client) GetAccount(ctx context.Context, id string) (*Account, error) {
 	}
 
 	return &Account{
-		ID:   r.Account.GetId(),
-		Name: r.Account.GetName(),
+		ID:    r.Account.GetId(),
+		Name:  r.Account.GetName(),
+		Email: r.Account.GetEmail(),
 	}, nil
 }
 
@@ -73,8 +76,9 @@ func (c *Client) GetAccounts(ctx context.Context, skip, take uint64) ([]Account,
 
 	for _, a := range r.Accounts {
 		accounts = append(accounts, Account{
-			ID:   a.GetId(),
-			Name: a.GetName(),
+			ID:    a.GetId(),
+			Name:  a.GetName(),
+			Email: a.GetEmail(),
 		})
 	}
 
