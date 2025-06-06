@@ -2,6 +2,8 @@ package product
 
 import (
 	"context"
+	"errors"
+	"log"
 
 	"github.com/google/uuid"
 )
@@ -11,16 +13,17 @@ type Product struct {
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
+	AccountID   string  `json:"accountId"`
 }
 
 type Service interface {
-	PostProduct(ctx context.Context, name, description string, price float64) (*Product, error)
+	PostProduct(ctx context.Context, name, description string, price float64, accountId string) (*Product, error)
 	GetProduct(ctx context.Context, id string) (*Product, error)
 	GetProducts(ctx context.Context, skip, take uint64) ([]Product, error)
 	GetProductsWithIDs(ctx context.Context, ids []string) ([]Product, error)
 	SearchProducts(ctx context.Context, query string, skip, take uint64) ([]Product, error)
-	UpdateProduct(ctx context.Context, id, name, description string, price float64) (*Product, error)
-	DeleteProduct(ctx context.Context, productId string) error
+	UpdateProduct(ctx context.Context, id, name, description string, price float64, accountId string) (*Product, error)
+	DeleteProduct(ctx context.Context, productId string, accountId string) error
 }
 
 type productService struct {
@@ -31,18 +34,25 @@ func NewProductService(repo Repository) Service {
 	return &productService{repo: repo}
 }
 
-func (p productService) PostProduct(ctx context.Context, name, description string, price float64) (*Product, error) {
+func (p productService) PostProduct(ctx context.Context, name, description string, price float64, accountId string) (*Product, error) {
+	log.Printf("PostProduct called with accountId: %s (type: %T)", accountId, accountId)
+
 	product := Product{
 		ID:          uuid.New().String(),
 		Name:        name,
 		Description: description,
 		Price:       price,
+		AccountID:   accountId,
 	}
 
+	log.Printf("Created product struct: %+v", product)
+
 	if err := p.repo.PutProduct(ctx, product); err != nil {
+		log.Printf("Error from repository.PutProduct: %v", err)
 		return nil, err
 	}
 
+	log.Printf("Successfully stored product in repository")
 	return &product, nil
 }
 
@@ -51,7 +61,17 @@ func (p productService) GetProduct(ctx context.Context, id string) (*Product, er
 }
 
 func (p productService) GetProducts(ctx context.Context, skip, take uint64) ([]Product, error) {
-	return p.repo.ListProducts(ctx, skip, take)
+	products, err := p.repo.ListProducts(ctx, skip, take)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("GetProducts: Retrieved %d products from repository", len(products))
+	for i, product := range products {
+		log.Printf("Product %d: ID=%s, Name=%s, AccountID=%s", i, product.ID, product.Name, product.AccountID)
+	}
+
+	return products, nil
 }
 
 func (p productService) GetProductsWithIDs(ctx context.Context, ids []string) ([]Product, error) {
@@ -62,21 +82,44 @@ func (p productService) SearchProducts(ctx context.Context, query string, skip, 
 	return p.repo.SearchProducts(ctx, query, skip, take)
 }
 
-func (p productService) UpdateProduct(ctx context.Context, id, name, description string, price float64) (*Product, error) {
+func (p productService) UpdateProduct(ctx context.Context, id, name, description string, price float64, accountId string) (*Product, error) {
+	product, err := p.repo.GetProductById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if product.AccountID != accountId {
+		return nil, errors.New("unauthorized")
+	}
+
 	updatedProduct := Product{
 		ID:          id,
 		Name:        name,
 		Description: description,
 		Price:       price,
+		AccountID:   accountId,
 	}
 
-	if err := p.repo.UpdateProduct(ctx, updatedProduct); err != nil {
+	if err = p.repo.UpdateProduct(ctx, updatedProduct); err != nil {
 		return nil, err
 	}
 
 	return &updatedProduct, nil
 }
 
-func (p productService) DeleteProduct(ctx context.Context, productId string) error {
-	return p.repo.DeleteProduct(ctx, productId)
+func (p productService) DeleteProduct(ctx context.Context, productId string, accountId string) error {
+	product, err := p.repo.GetProductById(ctx, productId)
+	if err != nil {
+		return err
+	}
+
+	if product.AccountID != accountId {
+		return errors.New("unauthorized")
+	}
+
+	if err = p.repo.DeleteProduct(ctx, productId); err != nil {
+		return err
+	}
+
+	return nil
 }
