@@ -9,6 +9,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gin-gonic/gin"
+	"github.com/go-systems-lab/go-ecommerce-lld/account"
+	"github.com/go-systems-lab/go-ecommerce-lld/pkg/middleware"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -18,6 +21,8 @@ type AppConfig struct {
 	ProductServiceURL string `envconfig:"PRODUCT_SERVICE_URL"`
 	OrderServiceURL   string `envconfig:"ORDER_SERVICE_URL"`
 	Port              string `envconfig:"PORT"`
+	SecretKey         string `envconfig:"SECRET_KEY"`
+	Issuer            string `envconfig:"ISSUER"`
 }
 
 func main() {
@@ -44,9 +49,17 @@ func main() {
 		Cache: lru.New[string](100),
 	})
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	engine := gin.Default()
+
+	engine.Use(middleware.GinContextToContextMiddleware())
+
+	engine.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
+	engine.POST("/graphql", AuthorizeJWT(account.NewJwtService(cfg.SecretKey, cfg.Issuer)), gin.WrapH(srv))
+	engine.GET("/playground", gin.WrapH(playground.Handler("GraphQL playground", "/graphql")))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
+	log.Fatal(engine.Run(":" + cfg.Port))
 }
