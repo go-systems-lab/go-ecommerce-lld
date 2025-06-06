@@ -46,7 +46,7 @@ func (o orderService) PostOrder(ctx context.Context, accountID string, products 
 	}
 
 	for _, product := range products {
-		order.TotalPrice += product.Price
+		order.TotalPrice += product.Price * float64(product.Quantity)
 	}
 	err := o.repository.PutOrder(ctx, order)
 	if err != nil {
