@@ -1,0 +1,135 @@
+version: '3.8'
+services:
+  # ACCOUNT SERVICE - Development with Hot Reload
+  account:
+    build:
+      context: .
+      dockerfile: ./account/app.dev.dockerfile
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@account_db:5432/ecommerce_account?sslmode=disable
+      - PORT=8080
+    depends_on:
+      - account_migrate
+    volumes:
+      - .:/app:delegated              # Mount entire project
+      - go-mod-cache:/go/pkg/mod      # Cache Go modules
+      - air-tmp:/app/tmp              # Air build cache
+    restart: on-failure
+
+  account_db:
+    build:
+      context: .
+      dockerfile: ./account/db.dockerfile
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ecommerce_account
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ecommerce_account"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  account_migrate:
+    image: migrate/migrate
+    depends_on:
+      account_db:
+        condition: service_healthy
+    volumes:
+      - ./account/migrations:/migrations
+    command: ["-path", "/migrations/", "-database", "postgres://postgres:postgres@account_db:5432/ecommerce_account?sslmode=disable", "up"]
+
+  # PRODUCT SERVICE - Development with Hot Reload
+  product:
+    build:
+      context: .
+      dockerfile: ./product/app.dev.dockerfile
+    environment:
+      - ELASTICSEARCH_URL=http://product_db:9200
+      - PORT=8080
+    depends_on:
+      - product_db
+    volumes:
+      - .:/app:delegated              # Mount entire project
+      - go-mod-cache:/go/pkg/mod      # Cache Go modules
+      - air-tmp:/app/tmp              # Air build cache
+    restart: on-failure
+
+  product_db:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.1
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+
+  # ORDER SERVICE - Development with Hot Reload
+  order:
+    build:
+      context: .
+      dockerfile: ./order/app.dev.dockerfile
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@order_db:5432/ecommerce_order?sslmode=disable
+      - ACCOUNT_URL=account:8080
+      - PRODUCT_URL=product:8080
+      - PORT=8080
+    depends_on:
+      - order_migrate
+    volumes:
+      - .:/app:delegated              # Mount entire project
+      - go-mod-cache:/go/pkg/mod      # Cache Go modules
+      - air-tmp:/app/tmp              # Air build cache
+    restart: on-failure
+  
+  order_db:
+    build:
+      context: .
+      dockerfile: ./order/db.dockerfile
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ecommerce_order
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ecommerce_order"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+  
+  order_migrate:
+    image: migrate/migrate
+    depends_on:
+      order_db:
+        condition: service_healthy
+    volumes:
+      - ./order/migrations:/migrations
+    command: ["-path", "/migrations/", "-database", "postgres://postgres:postgres@order_db:5432/ecommerce_order?sslmode=disable", "up"]
+
+  graphql:
+    build:
+      context: .
+      dockerfile: ./graphql/app.dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - account
+      - product
+      - order
+    environment:
+      - ACCOUNT_SERVICE_URL=account:8080
+      - PRODUCT_SERVICE_URL=product:8080
+      - ORDER_SERVICE_URL=order:8080
+      - PORT=8080
+    restart: on-failure
+
+volumes:
+  go-mod-cache:
+  air-tmp: 
