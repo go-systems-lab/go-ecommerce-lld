@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 )
 
 type queryResolver struct {
@@ -40,8 +41,9 @@ func (r *queryResolver) Accounts(ctx context.Context, pagination *PaginationInpu
 	var result []*Account
 	for _, acc := range accounts {
 		result = append(result, &Account{
-			ID:   acc.ID,
-			Name: acc.Name,
+			ID:    acc.ID,
+			Name:  acc.Name,
+			Email: acc.Email,
 		})
 	}
 
@@ -60,6 +62,7 @@ func (r *queryResolver) Product(ctx context.Context, pagination *PaginationInput
 				Name:        product.Name,
 				Description: product.Description,
 				Price:       product.Price,
+				AccountID:   product.AccountID,
 			},
 		}, nil
 	}
@@ -78,6 +81,11 @@ func (r *queryResolver) Product(ctx context.Context, pagination *PaginationInput
 		return nil, err
 	}
 
+	log.Printf("GraphQL Query: Retrieved %d products from client", len(products))
+	for i, p := range products {
+		log.Printf("GraphQL Product %d: ID=%s, Name=%s, AccountID=%s", i, p.ID, p.Name, p.AccountID)
+	}
+
 	var result []*Product
 	for _, p := range products {
 		result = append(result, &Product{
@@ -85,6 +93,7 @@ func (r *queryResolver) Product(ctx context.Context, pagination *PaginationInput
 			Name:        p.Name,
 			Description: p.Description,
 			Price:       p.Price,
+			AccountID:   p.AccountID,
 		})
 	}
 	return result, nil
