@@ -100,7 +100,9 @@ func (s *grpcServer) PostOrder(ctx context.Context, request *pb.PostOrderRequest
 		Products:   []*pb.Order_OrderProduct{},
 	}
 	orderProto.CreatedAt, _ = order.CreatedAt.MarshalBinary()
-	for _, p := range order.Products {
+
+	// Use the original products with full details instead of order.Products
+	for _, p := range products {
 		orderProto.Products = append(orderProto.Products, &pb.Order_OrderProduct{
 			Id:          p.ID,
 			Name:        p.Name,
@@ -145,12 +147,13 @@ func (s *grpcServer) GetOrdersForAccount(ctx context.Context, request *pb.GetOrd
 		op := &pb.Order{
 			AccountId:  o.AccountID,
 			Id:         o.ID,
-			TotalPrice: o.TotalPrice,
+			TotalPrice: 0, // We'll calculate this correctly
 			Products:   []*pb.Order_OrderProduct{},
 		}
 		op.CreatedAt, _ = o.CreatedAt.MarshalBinary()
 
-		// Decorate orders with products
+		// Decorate orders with products and calculate correct total price
+		var calculatedTotalPrice float64
 		for _, orderedProduct := range o.Products {
 			// Populate product fields
 			for _, p := range products {
@@ -158,6 +161,8 @@ func (s *grpcServer) GetOrdersForAccount(ctx context.Context, request *pb.GetOrd
 					orderedProduct.Name = p.Name
 					orderedProduct.Description = p.Description
 					orderedProduct.Price = p.Price
+					// Calculate total price correctly: price * quantity
+					calculatedTotalPrice += p.Price * float64(orderedProduct.Quantity)
 					break
 				}
 			}
@@ -171,6 +176,8 @@ func (s *grpcServer) GetOrdersForAccount(ctx context.Context, request *pb.GetOrd
 			})
 		}
 
+		// Set the correctly calculated total price
+		op.TotalPrice = calculatedTotalPrice
 		orders = append(orders, op)
 	}
 	return &pb.GetOrdersForAccountResponse{Orders: orders}, nil
