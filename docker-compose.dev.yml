@@ -8,6 +8,8 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:postgres@account_db:5432/ecommerce_account?sslmode=disable
       - PORT=8080
+      - SECRET_KEY=my-secret-key
+      - ISSUER=ecommerce
     depends_on:
       - account_migrate
     volumes:
@@ -128,6 +130,8 @@ services:
       - PRODUCT_SERVICE_URL=product:8080
       - ORDER_SERVICE_URL=order:8080
       - PORT=8080
+      - SECRET_KEY=my-secret-key
+      - ISSUER=ecommerce
     restart: on-failure
 
 volumes:
