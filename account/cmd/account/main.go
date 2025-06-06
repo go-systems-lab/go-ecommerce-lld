@@ -10,6 +10,8 @@ import (
 type config struct {
 	DatabaseURL string `envconfig:"DATABASE_URL" default:"postgres://postgres:postgres@localhost:5432/ecommerce_account?sslmode=disable"`
 	Port        int    `envconfig:"PORT" default:"8080"`
+	SecretKey   string `envconfig:"SECRET_KEY" default:"secret"`
+	Issuer      string `envconfig:"ISSUER" default:"ecommerce"`
 }
 
 func main() {
@@ -26,7 +28,8 @@ func main() {
 	}
 	defer r.Close()
 
+	authService := account.NewJwtService(cfg.SecretKey, cfg.Issuer)
 	log.Printf("starting account service on port %d", cfg.Port)
-	s := account.NewService(r)
+	s := account.NewService(r, authService)
 	log.Fatal(account.ListenGRPC(s, cfg.Port))
 }
