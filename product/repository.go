@@ -34,6 +34,7 @@ type ProductDocument struct {
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
+	AccountID   string  `json:"accountId"`
 }
 
 func NewElasticRepository(url string) (Repository, error) {
@@ -57,6 +58,7 @@ func (r *elasticRepository) PutProduct(ctx context.Context, p Product) error {
 		Name:        p.Name,
 		Description: p.Description,
 		Price:       p.Price,
+		AccountID:   p.AccountID,
 	}
 
 	docBytes, err := json.Marshal(doc)
@@ -118,6 +120,7 @@ func (r *elasticRepository) GetProductById(ctx context.Context, id string) (*Pro
 		Name:        product.Name,
 		Description: product.Description,
 		Price:       product.Price,
+		AccountID:   product.AccountID,
 	}, nil
 }
 
@@ -186,6 +189,7 @@ func (r *elasticRepository) ListProducts(ctx context.Context, skip, take uint64)
 				Name:        product.Name,
 				Description: product.Description,
 				Price:       product.Price,
+				AccountID:   product.AccountID,
 			})
 		}
 	}
@@ -260,6 +264,7 @@ func (r *elasticRepository) ListProductsWithIds(ctx context.Context, ids []strin
 				Name:        product.Name,
 				Description: product.Description,
 				Price:       product.Price,
+				AccountID:   product.AccountID,
 			})
 		}
 	}
@@ -334,6 +339,7 @@ func (r *elasticRepository) SearchProducts(ctx context.Context, query string, sk
 				Name:        product.Name,
 				Description: product.Description,
 				Price:       product.Price,
+				AccountID:   product.AccountID,
 			})
 		}
 	}
@@ -346,6 +352,7 @@ func (r *elasticRepository) UpdateProduct(ctx context.Context, updatedProduct Pr
 			Name:        updatedProduct.Name,
 			Description: updatedProduct.Description,
 			Price:       updatedProduct.Price,
+			AccountID:   updatedProduct.AccountID,
 		},
 	}
 
