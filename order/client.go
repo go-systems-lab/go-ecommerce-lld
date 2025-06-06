@@ -54,12 +54,24 @@ func (c *Client) PostOrder(ctx context.Context, accountID string, products []Ord
 	newOrderCreatedAt := time.Time{}
 	newOrderCreatedAt.UnmarshalBinary(newOrder.CreatedAt)
 
+	// Convert products from gRPC response
+	var responseProducts []OrderedProduct
+	for _, p := range newOrder.Products {
+		responseProducts = append(responseProducts, OrderedProduct{
+			ID:          p.Id,
+			Name:        p.Name,
+			Description: p.Description,
+			Price:       p.Price,
+			Quantity:    p.Quantity,
+		})
+	}
+
 	return &Order{
 		ID:         newOrder.Id,
 		CreatedAt:  newOrderCreatedAt,
 		AccountID:  newOrder.AccountId,
 		TotalPrice: newOrder.TotalPrice,
-		Products:   products,
+		Products:   responseProducts,
 	}, nil
 }
 
