@@ -7,22 +7,30 @@ option go_package = "./pb";
 message Account {
     string id = 1;
     string name = 2;
+    string email = 3;
 }
 
-message PostAccountRequest {
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message RegisterRequest {
     string name = 1;
+    string email = 2;
+    string password = 3;
 }
 
-message PostAccountResponse {
+message AccountResponse {
     Account account = 1;
+}
+
+message AuthResponse {
+    string token = 1;
 }
 
 message GetAccountRequest {
     string id = 1;
-}
-
-message GetAccountResponse {
-    Account account = 1;
 }
 
 message GetAccountsRequest {
@@ -35,7 +43,8 @@ message GetAccountsResponse {
 }
 
 service AccountService {
-    rpc PostAccount(PostAccountRequest) returns (PostAccountResponse);
-    rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
+    rpc LoginAccount(LoginRequest) returns (AuthResponse);
+    rpc RegisterAccount(RegisterRequest) returns (AuthResponse);
+    rpc GetAccount(GetAccountRequest) returns (AccountResponse);
     rpc GetAccounts(GetAccountsRequest) returns (GetAccountsResponse);
 }
