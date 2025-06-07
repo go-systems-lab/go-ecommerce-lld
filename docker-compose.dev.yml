@@ -115,10 +115,11 @@ services:
       - ./order/migrations:/migrations
     command: ["-path", "/migrations/", "-database", "postgres://postgres:postgres@order_db:5432/ecommerce_order?sslmode=disable", "up"]
 
+  # GRAPHQL API GATEWAY - Development with Hot Reload
   graphql:
     build:
       context: .
-      dockerfile: ./graphql/app.dockerfile
+      dockerfile: ./graphql/app.dev.dockerfile
     ports:
       - "8080:8080"
     depends_on:
@@ -132,6 +133,10 @@ services:
       - PORT=8080
       - SECRET_KEY=my-secret-key
       - ISSUER=ecommerce
+    volumes:
+      - .:/app:delegated              # Mount entire project
+      - go-mod-cache:/go/pkg/mod      # Cache Go modules
+      - air-tmp:/app/tmp              # Air build cache
     restart: on-failure
 
 volumes:
