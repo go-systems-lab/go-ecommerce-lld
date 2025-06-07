@@ -8,11 +8,19 @@ import (
 )
 
 type Order struct {
-	ID         string
-	CreatedAt  time.Time
-	AccountID  string
-	TotalPrice float64
-	Products   []OrderedProduct
+	ID           string
+	CreatedAt    time.Time
+	AccountID    string
+	TotalPrice   float64
+	Products     []OrderedProduct
+	productInfos []ProductsInfo
+}
+
+type ProductsInfo struct {
+	ID        string
+	OrderID   string
+	ProductID string
+	Quantity  int
 }
 
 type OrderedProduct struct {
@@ -24,7 +32,7 @@ type OrderedProduct struct {
 }
 
 type Service interface {
-	PostOrder(ctx context.Context, accountID string, products []OrderedProduct) (*Order, error)
+	PostOrder(ctx context.Context, accountID string, totalPrice float64, products []OrderedProduct) (*Order, error)
 	GetOrdersForAccount(ctx context.Context, accountID string) ([]Order, error)
 }
 
@@ -36,18 +44,15 @@ func NewOrderService(repository Repository) Service {
 	return &orderService{repository: repository}
 }
 
-func (o orderService) PostOrder(ctx context.Context, accountID string, products []OrderedProduct) (*Order, error) {
+func (o orderService) PostOrder(ctx context.Context, accountID string, totalPrice float64, products []OrderedProduct) (*Order, error) {
 	order := Order{
 		ID:         uuid.New().String(),
 		CreatedAt:  time.Now().UTC(),
 		AccountID:  accountID,
-		TotalPrice: 0.0,
+		TotalPrice: totalPrice,
 		Products:   products,
 	}
 
-	for _, product := range products {
-		order.TotalPrice += product.Price * float64(product.Quantity)
-	}
 	err := o.repository.PutOrder(ctx, order)
 	if err != nil {
 		return nil, err
