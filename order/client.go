@@ -33,11 +33,11 @@ func (c *Client) Close() {
 }
 
 func (c *Client) PostOrder(ctx context.Context, accountID string, products []OrderedProduct) (*Order, error) {
-	var protoProducts []*pb.PostOrderRequest_OrderProduct
+	var protoProducts []*pb.OrderProduct
 	for _, product := range products {
-		protoProducts = append(protoProducts, &pb.PostOrderRequest_OrderProduct{
-			ProductId: product.ID,
-			Quantity:  product.Quantity,
+		protoProducts = append(protoProducts, &pb.OrderProduct{
+			Id:       product.ID,
+			Quantity: product.Quantity,
 		})
 	}
 
