@@ -136,16 +136,19 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, product UpdateProd
 	}, nil
 }
 
-func (r *mutationResolver) DeleteProduct(ctx context.Context, id string) (bool, error) {
+func (r *mutationResolver) DeleteProduct(ctx context.Context, id string) (*bool, error) {
 	accountId := account.GetUserId(ctx)
 	if accountId == "" {
-		return false, errors.New("unauthorized")
+		result := false
+		return &result, errors.New("unauthorized")
 	}
 
 	err := r.server.productClient.DeleteProduct(ctx, id, accountId)
 	if err != nil {
-		return false, err
+		result := false
+		return &result, err
 	}
 
-	return true, nil
+	result := true
+	return &result, nil
 }
