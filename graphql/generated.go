@@ -62,6 +62,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CreateOrder   func(childComplexity int, order OrderInput) int
 		CreateProduct func(childComplexity int, product CreateProductInput) int
+		DeleteProduct func(childComplexity int, id string) int
 		Login         func(childComplexity int, input LoginInput) int
 		Register      func(childComplexity int, input RegisterInput) int
 		UpdateProduct func(childComplexity int, product UpdateProductInput) int
@@ -104,6 +105,7 @@ type MutationResolver interface {
 	Login(ctx context.Context, input LoginInput) (*AuthResponse, error)
 	CreateProduct(ctx context.Context, product CreateProductInput) (*Product, error)
 	UpdateProduct(ctx context.Context, product UpdateProductInput) (*Product, error)
+	DeleteProduct(ctx context.Context, id string) (*bool, error)
 	CreateOrder(ctx context.Context, order OrderInput) (*Order, error)
 }
 type QueryResolver interface {
@@ -188,6 +190,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateProduct(childComplexity, args["product"].(CreateProductInput)), true
+
+	case "Mutation.deleteProduct":
+		if e.complexity.Mutation.DeleteProduct == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteProduct_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteProduct(childComplexity, args["id"].(string)), true
 
 	case "Mutation.Login":
 		if e.complexity.Mutation.Login == nil {
@@ -587,6 +601,34 @@ func (ec *executionContext) field_Mutation_createProduct_argsProduct(
 	}
 
 	var zeroVal CreateProductInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteProduct_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteProduct_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteProduct_argsID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["id"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -1355,6 +1397,58 @@ func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteProduct(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteProduct(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4690,6 +4784,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateProduct":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateProduct(ctx, field)
+			})
+		case "deleteProduct":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteProduct(ctx, field)
 			})
 		case "createOrder":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
