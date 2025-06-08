@@ -1,98 +1,137 @@
 # Go E-commerce Microservices
 
-A microservices-based e-commerce system built with Go, gRPC, and GraphQL.
+A production-ready microservices-based e-commerce platform built with Go, gRPC, GraphQL, and Python ML services.
+
+## 🏗️ Architecture
+
+- **GraphQL Gateway** - Unified API endpoint (`localhost:8080`)
+- **Account Service** - User authentication & management (PostgreSQL)
+- **Product Service** - Product catalog & search (Elasticsearch)
+- **Order Service** - Order processing & management (PostgreSQL)
+- **Recommender Service** - ML-powered product recommendations (Python/Kafka)
 
 ## 🚀 Quick Start
 
-### Development (Hot Reload)
+### Development
 ```bash
-# Start development environment with hot reload
+# Start with hot reload
 docker-compose -f docker-compose.dev.yml up -d
 
-# View logs for all services (with hot reload)
-docker-compose -f docker-compose.dev.yml logs -f
-
-# View specific service logs
-docker-compose -f docker-compose.dev.yml logs -f account
-docker-compose -f docker-compose.dev.yml logs -f product  
-docker-compose -f docker-compose.dev.yml logs -f order
+# Access GraphQL Playground
+open http://localhost:8080
 ```
 
 ### Production
 ```bash
-# Start production environment
 docker-compose up -d
 ```
 
-## 📝 Development Features
+## 📋 GraphQL API
 
-- **Hot Reload**: Code changes in `account/`, `product/`, or `order/` automatically restart services
-- **Volume Mounting**: Live code sync without rebuilding containers
-- **Go Module Caching**: Faster builds with persistent module cache
-- **Service Isolation**: Each service has dedicated Air config
-
-## 🛠️ Local Development (Alternative)
-
-```bash
-# Install Air for hot reload
-go install github.com/air-verse/air@latest
-
-# Run services locally with hot reload
-air -c .air.account.toml    # Account service
-air -c .air.product.toml    # Product service  
-air -c .air.order.toml      # Order service
-
-# Run specific service directly
-go run account/cmd/account/main.go
-go run product/cmd/product/main.go
-go run order/cmd/order/main.go
-```
-
-## 🌐 Services
-
-- **GraphQL API**: `http://localhost:8080`
-- **Account Service**: `localhost:5432` (PostgreSQL)
-- **Product Service**: `localhost:9200` (Elasticsearch)  
-- **Order Service**: `localhost:5433` (PostgreSQL)
-
-## 📋 Development Commands
-
-```bash
-# Development with hot reload
-docker-compose -f docker-compose.dev.yml up -d
-
-# Production
-docker-compose up -d
-
-# Stop services
-docker-compose down
-
-# View logs
-docker-compose logs -f [service_name]
-
-# Rebuild specific service
-docker-compose up -d --build [service_name]
-```
-
-## 🧪 Testing GraphQL
-
-Visit `http://localhost:8080` and try:
-
+### Authentication
 ```graphql
-# Create Account
+# Register
 mutation {
-  createAccount(account: {name: "John Doe"}) {
-    id
-    name
+  Register(input: {
+    name: "John Doe"
+    email: "john@example.com"
+    password: "password123"
+  }) {
+    token
   }
 }
 
+# Login
+mutation {
+  Login(input: {
+    email: "john@example.com"
+    password: "password123"
+  }) {
+    token
+  }
+}
+```
+
+### Products
+```graphql
+# Create Product
+mutation {
+  createProduct(product: {
+    name: "iPhone 15"
+    description: "Latest Apple smartphone"
+    price: 999.99
+  }) {
+    id
+    name
+    price
+  }
+}
+
+# Update Product
+mutation {
+  updateProduct(product: {
+    id: "product-id"
+    name: "iPhone 15 Pro"
+    description: "Updated description"
+    price: 1099.99
+  }) {
+    id
+    name
+    price
+  }
+}
+
+# Delete Product
+mutation {
+  deleteProduct(id: "product-id")
+}
+
+# Get Product by ID
+query {
+  product(id: "product-id") {
+    id
+    name
+    description
+    price
+  }
+}
+
+# Search Products
+query {
+  product(query: "iPhone", pagination: {skip: 0, take: 10}) {
+    id
+    name
+    description
+    price
+  }
+}
+
+# Get Recommendations (based on viewed products)
+query {
+  product(viewedProductIds: ["product-id-1", "product-id-2"]) {
+    id
+    name
+    price
+  }
+}
+
+# Get Personalized Recommendations (for logged-in user)
+query {
+  product(byAccountId: true) {
+    id
+    name
+    price
+  }
+}
+```
+
+### Orders
+```graphql
 # Create Order
 mutation {
   createOrder(order: {
-    accountId: "your-account-id"
     products: [
-      { id: "product-id", quantity: 2 }
+      {id: "product-id", quantity: 2}
     ]
   }) {
     id
@@ -100,7 +139,101 @@ mutation {
     products {
       name
       quantity
+      price
     }
   }
 }
-``` 
+```
+
+### Users
+```graphql
+# Get All Accounts
+query {
+  accounts(pagination: {skip: 0, take: 10}) {
+    id
+    name
+    email
+    orders {
+      id
+      totalPrice
+    }
+  }
+}
+
+# Get Account by ID
+query {
+  accounts(id: "account-id") {
+    id
+    name
+    email
+    orders {
+      id
+      totalPrice
+    }
+  }
+}
+```
+
+## 🛠️ Development
+
+### Local Services
+```bash
+# Generate GraphQL & protobuf
+make gen && make proto
+
+# Run individual services
+go run account/cmd/account/main.go    # :50051
+go run product/cmd/product/main.go    # :50052  
+go run order/cmd/order/main.go        # :50053
+go run graphql/main.go                # :8080
+```
+
+### Database Migrations
+```bash
+# Account service
+make migrate-up DATABASE_URL="postgres://user:pass@localhost:5432/accounts?sslmode=disable"
+
+# Order service  
+make migrate-up DATABASE_URL="postgres://user:pass@localhost:5433/orders?sslmode=disable"
+```
+
+## 🧪 Testing
+
+### Manual Testing
+```bash
+# End-to-end flow
+python test_manual_flow.py
+
+# Recommender service
+python test_e2e_recommender.py
+```
+
+### Sample Data
+```bash
+# Debug order flow
+python debug_order.py
+```
+
+## 🌐 Services & Ports
+
+| Service | Port | Database |
+|---------|------|----------|
+| GraphQL Gateway | 8080 | - |
+| Account Service | 50051 | PostgreSQL:5432 |
+| Product Service | 50052 | Elasticsearch:9200 |
+| Order Service | 50053 | PostgreSQL:5433 |
+| Recommender | 50054 | Kafka, Vector DB |
+
+## 🔧 Tech Stack
+
+- **Backend**: Go, gRPC, GraphQL (gqlgen)
+- **Database**: PostgreSQL, Elasticsearch  
+- **ML**: Python, Kafka, Vector embeddings
+- **DevOps**: Docker, Air (hot reload)
+- **Auth**: JWT tokens
+
+## 📚 GraphQL Schema
+
+Visit `http://localhost:8080` for interactive schema exploration and testing.
+
+Built with microservices best practices for scalability and maintainability. 
