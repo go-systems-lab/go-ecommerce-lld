@@ -1,0 +1,13 @@
+sqlalchemy==2.0.23
+alembic==1.13.1
+psycopg2-binary==2.9.9
+python-dotenv==1.0.0 
+pandas==2.2.3
+kafka-python==2.2.11
+grpcio==1.72.1
+grpcio-tools==1.72.1
+protobuf==6.31.1
+numpy==1.26.4
+requests==2.32.3
+scikit-surprise==1.1.4
+surprise==0.1

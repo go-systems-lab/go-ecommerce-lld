@@ -1,0 +1,35 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+package pb;
+
+option go_package = "./pb";
+
+
+message ProductInteraction {
+    string user_id = 1;
+    string product_id = 2;
+    string interaction_type = 3;
+}
+
+message RecommendationRequest {
+    string user_id = 1;
+    string current_product_id = 2;
+}
+
+message ProductReplica {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    double price = 4;
+}
+
+message RecommendationResponse {
+    repeated ProductReplica recommended_products = 1;
+}
+
+service RecommenderService {
+    rpc GetRecommendations (RecommendationRequest) returns (RecommendationResponse);
+    rpc RecordInteraction (ProductInteraction) returns (google.protobuf.Empty);
+}
+
+
