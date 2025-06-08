@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 
+	"github.com/IBM/sarama"
 	"github.com/google/uuid"
 )
 
@@ -27,11 +28,12 @@ type Service interface {
 }
 
 type productService struct {
-	repo Repository
+	repo     Repository
+	producer sarama.AsyncProducer
 }
 
-func NewProductService(repo Repository) Service {
-	return &productService{repo: repo}
+func NewProductService(repo Repository, producer sarama.AsyncProducer) Service {
+	return &productService{repo: repo, producer: producer}
 }
 
 func (p productService) PostProduct(ctx context.Context, name, description string, price float64, accountId string) (*Product, error) {
@@ -52,12 +54,46 @@ func (p productService) PostProduct(ctx context.Context, name, description strin
 		return nil, err
 	}
 
+	go func() {
+		err := p.SendMessageToRecommender(Event{
+			Type: "product_created",
+			Data: EventData{
+				ID:          &product.ID,
+				Name:        &product.Name,
+				Description: &product.Description,
+				Price:       &product.Price,
+				AccountID:   &accountId,
+			},
+		}, "product_events")
+		if err != nil {
+			log.Printf("Error sending message to recommender: %v", err)
+		}
+	}()
+
 	log.Printf("Successfully stored product in repository")
 	return &product, nil
 }
 
 func (p productService) GetProduct(ctx context.Context, id string) (*Product, error) {
-	return p.repo.GetProductById(ctx, id)
+	product, err := p.repo.GetProductById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		err := p.SendMessageToRecommender(Event{
+			Type: "product_retrieved",
+			Data: EventData{
+				ID:        &product.ID,
+				AccountID: &product.AccountID,
+			},
+		}, "interaction_events")
+		if err != nil {
+			log.Printf("Error sending message to recommender: %v", err)
+		}
+	}()
+
+	return product, nil
 }
 
 func (p productService) GetProducts(ctx context.Context, skip, take uint64) ([]Product, error) {
@@ -104,6 +140,22 @@ func (p productService) UpdateProduct(ctx context.Context, id, name, description
 		return nil, err
 	}
 
+	go func() {
+		err := p.SendMessageToRecommender(Event{
+			Type: "product_updated",
+			Data: EventData{
+				ID:          &updatedProduct.ID,
+				Name:        &updatedProduct.Name,
+				Description: &updatedProduct.Description,
+				Price:       &updatedProduct.Price,
+				AccountID:   &accountId,
+			},
+		}, "product_events")
+		if err != nil {
+			log.Printf("Error sending message to recommender: %v", err)
+		}
+	}()
+
 	return &updatedProduct, nil
 }
 
@@ -116,6 +168,19 @@ func (p productService) DeleteProduct(ctx context.Context, productId string, acc
 	if product.AccountID != accountId {
 		return errors.New("unauthorized")
 	}
+
+	go func() {
+
+		err = p.SendMessageToRecommender(Event{
+			Type: "product_deleted",
+			Data: EventData{
+				ID: &product.ID,
+			},
+		}, "product_events")
+		if err != nil {
+			log.Printf("Error sending message to recommender: %v", err)
+		}
+	}()
 
 	if err = p.repo.DeleteProduct(ctx, productId); err != nil {
 		return err
