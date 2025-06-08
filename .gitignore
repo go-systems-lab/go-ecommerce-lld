@@ -24,3 +24,30 @@ go.work.sum
 # env file
 .env
 .idea
+venv/
+__pycache__/
+
+# IDE and editor files
+.cursor/
+.vscode/
+.vs/
+
+# Python virtual environments
+venv/
+env/
+ENV/
+
+# Python compiled files
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary and debug files
+*.tmp
+*.temp
+cookies.txt
+debug_*.py
+test_*.py
+
+# Generated files
+*.log
