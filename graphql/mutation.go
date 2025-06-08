@@ -74,11 +74,14 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, product CreateProd
 }
 
 func (r *mutationResolver) CreateOrder(ctx context.Context, in OrderInput) (*Order, error) {
+	log.Printf("CreateOrder called with %d products", len(in.Products))
+
 	var products []order.OrderedProduct
 	for _, p := range in.Products {
 		if p.Quantity <= 0 {
 			return nil, ErrInvalidParameter
 		}
+		log.Printf("Adding product to order: ID=%s, Quantity=%d", p.ID, p.Quantity)
 		products = append(products, order.OrderedProduct{
 			ID:       p.ID,
 			Quantity: uint32(p.Quantity),
@@ -90,6 +93,7 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, in OrderInput) (*Ord
 		return nil, errors.New("unauthorized")
 	}
 
+	log.Printf("Calling orderClient.PostOrder with accountId=%s and %d products", accountId, len(products))
 	o, err := r.server.orderClient.PostOrder(ctx, accountId, products)
 	if err != nil {
 		log.Println(err)

@@ -93,7 +93,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Accounts func(childComplexity int, pagination *PaginationInput, id *string) int
-		Product  func(childComplexity int, pagination *PaginationInput, query *string, id *string) int
+		Product  func(childComplexity int, pagination *PaginationInput, query *string, id *string, recommended *bool) int
 	}
 }
 
@@ -110,7 +110,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Accounts(ctx context.Context, pagination *PaginationInput, id *string) ([]*Account, error)
-	Product(ctx context.Context, pagination *PaginationInput, query *string, id *string) ([]*Product, error)
+	Product(ctx context.Context, pagination *PaginationInput, query *string, id *string, recommended *bool) ([]*Product, error)
 }
 
 type executableSchema struct {
@@ -359,7 +359,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Product(childComplexity, args["pagination"].(*PaginationInput), args["query"].(*string), args["id"].(*string)), true
+		return e.complexity.Query.Product(childComplexity, args["pagination"].(*PaginationInput), args["query"].(*string), args["id"].(*string), args["recommended"].(*bool)), true
 
 	}
 	return 0, false
@@ -757,6 +757,11 @@ func (ec *executionContext) field_Query_product_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["id"] = arg2
+	arg3, err := ec.field_Query_product_argsRecommended(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["recommended"] = arg3
 	return args, nil
 }
 func (ec *executionContext) field_Query_product_argsPagination(
@@ -810,6 +815,24 @@ func (ec *executionContext) field_Query_product_argsID(
 	}
 
 	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_product_argsRecommended(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*bool, error) {
+	if _, ok := rawArgs["recommended"]; !ok {
+		var zeroVal *bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("recommended"))
+	if tmp, ok := rawArgs["recommended"]; ok {
+		return ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+	}
+
+	var zeroVal *bool
 	return zeroVal, nil
 }
 
@@ -2224,7 +2247,7 @@ func (ec *executionContext) _Query_product(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Product(rctx, fc.Args["pagination"].(*PaginationInput), fc.Args["query"].(*string), fc.Args["id"].(*string))
+		return ec.resolvers.Query().Product(rctx, fc.Args["pagination"].(*PaginationInput), fc.Args["query"].(*string), fc.Args["id"].(*string), fc.Args["recommended"].(*bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

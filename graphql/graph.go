@@ -7,6 +7,7 @@ import (
 	"github.com/go-systems-lab/go-ecommerce-lld/account"
 	"github.com/go-systems-lab/go-ecommerce-lld/order"
 	"github.com/go-systems-lab/go-ecommerce-lld/product"
+	"github.com/go-systems-lab/go-ecommerce-lld/recommender"
 )
 
 func getEnv(key, defaultValue string) string {
@@ -17,15 +18,17 @@ func getEnv(key, defaultValue string) string {
 }
 
 type Server struct {
-	accountClient *account.Client
-	productClient *product.Client
-	orderClient   *order.Client
+	accountClient     *account.Client
+	productClient     *product.Client
+	orderClient       *order.Client
+	recommenderClient *recommender.Client
 }
 
 func NewGraphQLServer(
 	accountServiceURL,
 	productServiceURL,
-	orderServiceURL string,
+	orderServiceURL,
+	recommenderServiceURL string,
 ) (*Server, error) {
 	// Connect to account service
 	accountClient, err := account.NewClient(accountServiceURL)
@@ -45,10 +48,17 @@ func NewGraphQLServer(
 		return nil, err
 	}
 
+	// Connect to recommender service
+	recommenderClient, err := recommender.NewClient(recommenderServiceURL)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Server{
-		accountClient: accountClient,
-		productClient: productClient,
-		orderClient:   orderClient,
+		accountClient:     accountClient,
+		productClient:     productClient,
+		orderClient:       orderClient,
+		recommenderClient: recommenderClient,
 	}, nil
 }
 

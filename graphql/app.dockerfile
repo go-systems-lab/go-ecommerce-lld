@@ -6,6 +6,7 @@ RUN go mod download
 COPY account account
 COPY product product
 COPY order order
+COPY recommender recommender
 COPY graphql graphql
 COPY pkg pkg
 COPY tools.go .

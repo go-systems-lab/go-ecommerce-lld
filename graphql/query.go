@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+
+	"github.com/go-systems-lab/go-ecommerce-lld/account"
 )
 
 type queryResolver struct {
@@ -50,7 +53,7 @@ func (r *queryResolver) Accounts(ctx context.Context, pagination *PaginationInpu
 	return result, nil
 }
 
-func (r *queryResolver) Product(ctx context.Context, pagination *PaginationInput, query, id *string) ([]*Product, error) {
+func (r *queryResolver) Product(ctx context.Context, pagination *PaginationInput, query, id *string, recommended *bool) ([]*Product, error) {
 	if id != nil {
 		product, err := r.server.productClient.GetProduct(ctx, *id)
 		if err != nil {
@@ -69,6 +72,22 @@ func (r *queryResolver) Product(ctx context.Context, pagination *PaginationInput
 	skip, take := uint64(0), uint64(10)
 	if pagination != nil {
 		skip, take = pagination.bounds()
+	}
+
+	// Get recommended products
+	if *recommended == true {
+		accountId := account.GetUserId(ctx)
+		if accountId == "" {
+			return nil, errors.New("account ID not found")
+		}
+
+		recommendations, err := r.server.recommenderClient.GetRecommendation(ctx, accountId)
+		if err != nil {
+			return nil, err
+		}
+		if recommendations == nil {
+			return nil, errors.New("no recommendations found")
+		}
 	}
 
 	q := ""
