@@ -4,11 +4,15 @@ A production-ready microservices-based e-commerce platform built with Go, gRPC, 
 
 ## 🏗️ Architecture
 
+![Architecture Diagram](architecture.png)
+
 - **GraphQL Gateway** - Unified API endpoint (`localhost:8080`)
 - **Account Service** - User authentication & management (PostgreSQL)
 - **Product Service** - Product catalog & search (Elasticsearch)
 - **Order Service** - Order processing & management (PostgreSQL)
 - **Recommender Service** - ML-powered product recommendations (Python/Kafka)
+
+
 
 ## 🚀 Quick Start
 
