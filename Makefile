@@ -8,9 +8,13 @@ run:
 	go run graphql/*.go
 
 proto:
+	mkdir -p ./account/pb ./product/pb ./order/pb ./recommender/generated/pb
 	protoc --go_out=./account/pb --go_opt=paths=source_relative --go-grpc_out=./account/pb --go-grpc_opt=paths=source_relative --proto_path=./account account.proto
 	protoc --go_out=./product/pb --go_opt=paths=source_relative --go-grpc_out=./product/pb --go-grpc_opt=paths=source_relative --proto_path=./product product.proto
 	protoc --go_out=./order/pb --go_opt=paths=source_relative --go-grpc_out=./order/pb --go-grpc_opt=paths=source_relative --proto_path=./order order.proto
+	protoc --go_out=./recommender/generated/pb --go_opt=paths=source_relative --go-grpc_out=./recommender/generated/pb --go-grpc_opt=paths=source_relative --proto_path=./recommender recommender.proto
+	python -m grpc_tools.protoc -I./recommender --python_out=./recommender/generated/pb --pyi_out=./recommender/generated/pb --grpc_python_out=./recommender/generated/pb ./recommender/recommender.proto
+	sed -i '' 's/import recommender_pb2 as recommender__pb2/from . import recommender_pb2 as recommender__pb2/g' ./recommender/generated/pb/recommender_pb2_grpc.py
 
 # Docker targets - Database
 db-build:

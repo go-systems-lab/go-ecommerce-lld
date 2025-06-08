@@ -13,9 +13,7 @@ services:
     restart: on-failure
 
   account_db:
-    build:
-      context: .
-      dockerfile: ./account/db.dockerfile
+    image: postgres:17.3-alpine
     ports:
       - "5432:5432"
     environment:
@@ -45,8 +43,10 @@ services:
     environment:
       - ELASTICSEARCH_URL=http://product_db:9200
       - PORT=8080
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - product_db
+      - kafka
     restart: on-failure
 
   product_db:
@@ -69,14 +69,14 @@ services:
       - ACCOUNT_URL=account:8080
       - PRODUCT_URL=product:8080
       - PORT=8080
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - order_migrate
+      - kafka
     restart: on-failure
   
   order_db:
-    build:
-      context: .
-      dockerfile: ./order/db.dockerfile
+    image: postgres:17.3-alpine
     ports:
       - "5433:5432"
     environment:
@@ -99,6 +99,91 @@ services:
       - ./order/migrations:/migrations
     command: ["-path", "/migrations/", "-database", "postgres://postgres:postgres@order_db:5432/ecommerce_order?sslmode=disable", "up"]
 
+  recommender-migrate:
+    build:
+      context: .
+      dockerfile: ./recommender/app.dockerfile
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      recommender_db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@recommender_db:5432/recommender_db?sslmode=disable
+    volumes:
+      - ./recommender:/app
+
+  recommender-server:
+    build:
+      context: .
+      dockerfile: ./recommender/app.dockerfile
+    command: ["python", "app/entry/main.py"]
+    ports:
+      - "50051:50051"
+    depends_on:
+      - recommender-migrate
+      - kafka
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@recommender_db:5432/recommender_db?sslmode=disable
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - PRODUCT_API_URL=product:8080
+  
+  recommender-sync:
+    build:
+      context: .
+      dockerfile: ./recommender/app.dockerfile
+    command: ["python", "app/entry/sync.py"]
+    depends_on:
+      - recommender-migrate
+      - kafka
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@recommender_db:5432/recommender_db?sslmode=disable
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - PRODUCT_API_URL=product:8080
+
+  recommender_db:
+    image: postgres:17.3-alpine
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=recommender_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d recommender_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  zookeeper:
+    restart: always
+    container_name: kafka-zookeeper
+    image: bitnami/zookeeper:3.6
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper-volume:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: bitnami/kafka:3.6
+    depends_on:
+      - zookeeper
+    volumes:
+      - "kafka-volume:/bitnami"
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=CLIENT
+    restart: unless-stopped
+
   graphql:
     build:
       context: .
@@ -108,11 +193,17 @@ services:
     depends_on:
       - account
       - product
+      - order
     environment:
       - ACCOUNT_SERVICE_URL=account:8080
       - PRODUCT_SERVICE_URL=product:8080
       - ORDER_SERVICE_URL=order:8080
+      - RECOMMENDER_SERVICE_URL=recommender-server:50051
       - PORT=8080
       - SECRET_KEY=my-secret-key
       - ISSUER=ecommerce
     restart: on-failure
+
+volumes:
+  zookeeper-volume:
+  kafka-volume:
