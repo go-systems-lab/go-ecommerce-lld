@@ -2,8 +2,10 @@ package order
 
 import (
 	"context"
+	"log"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/google/uuid"
 )
 
@@ -38,13 +40,16 @@ type Service interface {
 
 type orderService struct {
 	repository Repository
+	producer   sarama.AsyncProducer
 }
 
-func NewOrderService(repository Repository) Service {
-	return &orderService{repository: repository}
+func NewOrderService(repository Repository, producer sarama.AsyncProducer) Service {
+	return &orderService{repository: repository, producer: producer}
 }
 
 func (o orderService) PostOrder(ctx context.Context, accountID string, totalPrice float64, products []OrderedProduct) (*Order, error) {
+	log.Printf("PostOrder called with accountID: %s, %d products", accountID, len(products))
+
 	order := Order{
 		ID:         uuid.New().String(),
 		CreatedAt:  time.Now().UTC(),
@@ -53,10 +58,40 @@ func (o orderService) PostOrder(ctx context.Context, accountID string, totalPric
 		Products:   products,
 	}
 
+	log.Printf("Created order with ID: %s", order.ID)
+
 	err := o.repository.PutOrder(ctx, order)
 	if err != nil {
+		log.Printf("Error storing order in repository: %v", err)
 		return nil, err
 	}
+
+	log.Printf("Order stored in repository successfully, sending %d interaction events", len(products))
+
+	// send to recommendation service
+	go func() {
+		for i, product := range products {
+			log.Printf("Sending interaction event %d/%d for product %s", i+1, len(products), product.ID)
+
+			event := Event{
+				Type: "purchase",
+				EventData: EventData{
+					AccountId: accountID,
+					ProductId: product.ID,
+				},
+			}
+
+			log.Printf("Sending event: %+v", event)
+
+			err = o.SendMessageToRecommender(event, "interaction_events")
+			if err != nil {
+				log.Printf("Error sending message to recommender: %v", err)
+			} else {
+				log.Printf("Successfully sent interaction event for product %s", product.ID)
+			}
+		}
+		log.Printf("Finished sending all %d interaction events", len(products))
+	}()
 
 	return &order, nil
 }

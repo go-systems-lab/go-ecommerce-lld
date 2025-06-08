@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/go-systems-lab/go-ecommerce-lld/account"
@@ -50,20 +51,49 @@ func ListenGRPC(s Service, accountURL, productURL string, port int) error {
 }
 
 func (s *grpcServer) PostOrder(ctx context.Context, request *pb.PostOrderRequest) (*pb.PostOrderResponse, error) {
+	log.Printf("PostOrder gRPC handler called with %d products", len(request.Products))
+	for i, p := range request.Products {
+		log.Printf("Request product %d: ID=%s, Quantity=%d", i, p.Id, p.Quantity)
+	}
+
 	_, err := s.accountClient.GetAccount(ctx, request.AccountId)
 	if err != nil {
 		log.Println("Error getting account", err)
 		return nil, err
 	}
-	var productIDs []string
+
+	log.Printf("Fetching product details (optimistic approach)...")
+	var orderedProducts []product.Product
+	var asyncProductIDs []string
+
 	for _, p := range request.Products {
-		productIDs = append(productIDs, p.Id)
+		log.Printf("Fetching product with ID: %s", p.Id)
+
+		// Try immediate fetch - don't block if not found
+		fetchedProduct, err := s.productClient.GetProduct(ctx, p.Id)
+		if err == nil {
+			log.Printf("✅ Product found immediately: %s", fetchedProduct.Name)
+			orderedProducts = append(orderedProducts, *fetchedProduct)
+		} else {
+			log.Printf("⏳ Product %s not immediately available, will retry asynchronously", p.Id)
+			asyncProductIDs = append(asyncProductIDs, p.Id)
+
+			// Create placeholder product for order (optimistic)
+			orderedProducts = append(orderedProducts, product.Product{
+				ID:    p.Id,
+				Name:  "Product (Processing...)",
+				Price: 0.0, // Placeholder price
+			})
+		}
 	}
-	orderedProducts, err := s.productClient.GetProducts(ctx, 0, 0, productIDs, "")
-	if err != nil {
-		log.Println("Error getting ordered products", err)
-		return nil, err
+
+	// Start async processing for products that weren't immediately available
+	if len(asyncProductIDs) > 0 {
+		log.Printf("🚀 Starting async interaction event processing for %d products", len(asyncProductIDs))
+		go s.processInteractionEventsAsync(ctx, request.AccountId, asyncProductIDs)
 	}
+
+	log.Printf("Retrieved %d products from product service", len(orderedProducts))
 
 	var products []OrderedProduct
 	var calculatedTotalPrice float64
@@ -184,4 +214,56 @@ func (s *grpcServer) GetOrdersForAccount(ctx context.Context, request *pb.GetOrd
 		orders = append(orders, op)
 	}
 	return &pb.GetOrdersForAccountResponse{Orders: orders}, nil
+}
+
+// processInteractionEventsAsync handles async interaction event processing with retries
+func (s *grpcServer) processInteractionEventsAsync(ctx context.Context, accountID string, productIDs []string) {
+	maxRetries := 3
+	baseDelay := 2 * time.Second
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		allFound := true
+		var validProducts []product.Product
+
+		for _, productID := range productIDs {
+			product, err := s.productClient.GetProduct(ctx, productID)
+			if err != nil {
+				log.Printf("🔄 Async attempt %d: Product %s not found yet", attempt+1, productID)
+				allFound = false
+				break
+			}
+			validProducts = append(validProducts, *product)
+		}
+
+		if allFound {
+			log.Printf("✅ All async products found on attempt %d, sending interaction events", attempt+1)
+			// Send interaction events for all found products
+			for _, prod := range validProducts {
+				if orderSvc, ok := s.service.(*orderService); ok {
+					err := orderSvc.SendMessageToRecommender(Event{
+						Type: "purchase",
+						EventData: EventData{
+							AccountId: accountID,
+							ProductId: prod.ID,
+						},
+					}, "interaction_events")
+
+					if err != nil {
+						log.Printf("❌ Error sending async interaction event for product %s: %v", prod.ID, err)
+					} else {
+						log.Printf("✅ Successfully sent async interaction event for product %s", prod.ID)
+					}
+				}
+			}
+			return
+		}
+
+		if attempt < maxRetries-1 {
+			waitTime := baseDelay * time.Duration(attempt+1)
+			log.Printf("⏳ Retrying async interaction events in %v (attempt %d/%d)", waitTime, attempt+1, maxRetries)
+			time.Sleep(waitTime)
+		}
+	}
+
+	log.Printf("❌ Failed to process async interaction events after %d attempts", maxRetries)
 }
