@@ -11,9 +11,16 @@ message ProductInteraction {
     string interaction_type = 3;
 }
 
-message RecommendationRequest {
+message RecommendationRequestForUserId {
     string user_id = 1;
-    string current_product_id = 2;
+    uint64 skip = 2;
+    uint64 take = 3;
+}
+
+message RecommendationRequestOnViews {
+    repeated string ids = 1;
+    uint64 skip = 2;
+    uint64 take = 3;
 }
 
 message ProductReplica {
@@ -28,7 +35,8 @@ message RecommendationResponse {
 }
 
 service RecommenderService {
-    rpc GetRecommendations (RecommendationRequest) returns (RecommendationResponse);
+    rpc GetRecommendationsForUserId (RecommendationRequestForUserId) returns (RecommendationResponse);
+    rpc GetRecommendationsOnViews (RecommendationRequestOnViews) returns (RecommendationResponse);
     rpc RecordInteraction (ProductInteraction) returns (google.protobuf.Empty);
 }
 

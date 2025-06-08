@@ -17,13 +17,25 @@ class ProductInteraction(_message.Message):
     interaction_type: str
     def __init__(self, user_id: _Optional[str] = ..., product_id: _Optional[str] = ..., interaction_type: _Optional[str] = ...) -> None: ...
 
-class RecommendationRequest(_message.Message):
-    __slots__ = ("user_id", "current_product_id")
+class RecommendationRequestForUserId(_message.Message):
+    __slots__ = ("user_id", "skip", "take")
     USER_ID_FIELD_NUMBER: _ClassVar[int]
-    CURRENT_PRODUCT_ID_FIELD_NUMBER: _ClassVar[int]
+    SKIP_FIELD_NUMBER: _ClassVar[int]
+    TAKE_FIELD_NUMBER: _ClassVar[int]
     user_id: str
-    current_product_id: str
-    def __init__(self, user_id: _Optional[str] = ..., current_product_id: _Optional[str] = ...) -> None: ...
+    skip: int
+    take: int
+    def __init__(self, user_id: _Optional[str] = ..., skip: _Optional[int] = ..., take: _Optional[int] = ...) -> None: ...
+
+class RecommendationRequestOnViews(_message.Message):
+    __slots__ = ("ids", "skip", "take")
+    IDS_FIELD_NUMBER: _ClassVar[int]
+    SKIP_FIELD_NUMBER: _ClassVar[int]
+    TAKE_FIELD_NUMBER: _ClassVar[int]
+    ids: _containers.RepeatedScalarFieldContainer[str]
+    skip: int
+    take: int
+    def __init__(self, ids: _Optional[_Iterable[str]] = ..., skip: _Optional[int] = ..., take: _Optional[int] = ...) -> None: ...
 
 class ProductReplica(_message.Message):
     __slots__ = ("id", "name", "description", "price")

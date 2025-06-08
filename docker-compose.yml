@@ -20,6 +20,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=ecommerce_account
+    volumes:
+      - account_db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d ecommerce_account"]
       interval: 5s
@@ -59,6 +61,8 @@ services:
       - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
       - xpack.security.transport.ssl.enabled=false
+    volumes:
+      - product_db_data:/usr/share/elasticsearch/data
 
   order:
     build:
@@ -89,6 +93,8 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    volumes:
+      - order_db_data:/var/lib/postgresql/data
   
   order_migrate:
     image: migrate/migrate
@@ -154,6 +160,8 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    volumes:
+      - recommender_db_data:/var/lib/postgresql/data
 
   zookeeper:
     restart: always
@@ -207,3 +215,7 @@ services:
 volumes:
   zookeeper-volume:
   kafka-volume:
+  account_db_data:
+  product_db_data:
+  order_db_data:
+  recommender_db_data:

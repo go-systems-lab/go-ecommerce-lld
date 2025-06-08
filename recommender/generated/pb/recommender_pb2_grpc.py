@@ -35,9 +35,14 @@ class RecommenderServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.GetRecommendations = channel.unary_unary(
-                '/pb.RecommenderService/GetRecommendations',
-                request_serializer=recommender__pb2.RecommendationRequest.SerializeToString,
+        self.GetRecommendationsForUserId = channel.unary_unary(
+                '/pb.RecommenderService/GetRecommendationsForUserId',
+                request_serializer=recommender__pb2.RecommendationRequestForUserId.SerializeToString,
+                response_deserializer=recommender__pb2.RecommendationResponse.FromString,
+                _registered_method=True)
+        self.GetRecommendationsOnViews = channel.unary_unary(
+                '/pb.RecommenderService/GetRecommendationsOnViews',
+                request_serializer=recommender__pb2.RecommendationRequestOnViews.SerializeToString,
                 response_deserializer=recommender__pb2.RecommendationResponse.FromString,
                 _registered_method=True)
         self.RecordInteraction = channel.unary_unary(
@@ -50,7 +55,13 @@ class RecommenderServiceStub(object):
 class RecommenderServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def GetRecommendations(self, request, context):
+    def GetRecommendationsForUserId(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetRecommendationsOnViews(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -65,9 +76,14 @@ class RecommenderServiceServicer(object):
 
 def add_RecommenderServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'GetRecommendations': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetRecommendations,
-                    request_deserializer=recommender__pb2.RecommendationRequest.FromString,
+            'GetRecommendationsForUserId': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetRecommendationsForUserId,
+                    request_deserializer=recommender__pb2.RecommendationRequestForUserId.FromString,
+                    response_serializer=recommender__pb2.RecommendationResponse.SerializeToString,
+            ),
+            'GetRecommendationsOnViews': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetRecommendationsOnViews,
+                    request_deserializer=recommender__pb2.RecommendationRequestOnViews.FromString,
                     response_serializer=recommender__pb2.RecommendationResponse.SerializeToString,
             ),
             'RecordInteraction': grpc.unary_unary_rpc_method_handler(
@@ -87,7 +103,7 @@ class RecommenderService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def GetRecommendations(request,
+    def GetRecommendationsForUserId(request,
             target,
             options=(),
             channel_credentials=None,
@@ -100,8 +116,35 @@ class RecommenderService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/pb.RecommenderService/GetRecommendations',
-            recommender__pb2.RecommendationRequest.SerializeToString,
+            '/pb.RecommenderService/GetRecommendationsForUserId',
+            recommender__pb2.RecommendationRequestForUserId.SerializeToString,
+            recommender__pb2.RecommendationResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetRecommendationsOnViews(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/pb.RecommenderService/GetRecommendationsOnViews',
+            recommender__pb2.RecommendationRequestOnViews.SerializeToString,
             recommender__pb2.RecommendationResponse.FromString,
             options,
             channel_credentials,

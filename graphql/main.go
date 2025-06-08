@@ -17,13 +17,13 @@ import (
 )
 
 type AppConfig struct {
-	AccountServiceURL        string `envconfig:"ACCOUNT_SERVICE_URL"`
-	ProductServiceURL        string `envconfig:"PRODUCT_SERVICE_URL"`
-	OrderServiceURL          string `envconfig:"ORDER_SERVICE_URL"`
-	RecommendationServiceURL string `envconfig:"RECOMMENDATION_SERVICE_URL"`
-	Port                     string `envconfig:"PORT"`
-	SecretKey                string `envconfig:"SECRET_KEY"`
-	Issuer                   string `envconfig:"ISSUER"`
+	AccountServiceURL     string `envconfig:"ACCOUNT_SERVICE_URL"`
+	ProductServiceURL     string `envconfig:"PRODUCT_SERVICE_URL"`
+	OrderServiceURL       string `envconfig:"ORDER_SERVICE_URL"`
+	RecommenderServiceURL string `envconfig:"RECOMMENDER_SERVICE_URL"`
+	Port                  string `envconfig:"PORT"`
+	SecretKey             string `envconfig:"SECRET_KEY"`
+	Issuer                string `envconfig:"ISSUER"`
 }
 
 func main() {
@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s, err := NewGraphQLServer(cfg.AccountServiceURL, cfg.ProductServiceURL, cfg.OrderServiceURL, cfg.RecommendationServiceURL)
+	s, err := NewGraphQLServer(cfg.AccountServiceURL, cfg.ProductServiceURL, cfg.OrderServiceURL, cfg.RecommenderServiceURL)
 	if err != nil {
 		log.Fatal(err)
 	}

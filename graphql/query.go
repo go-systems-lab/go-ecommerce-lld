@@ -53,7 +53,7 @@ func (r *queryResolver) Accounts(ctx context.Context, pagination *PaginationInpu
 	return result, nil
 }
 
-func (r *queryResolver) Product(ctx context.Context, pagination *PaginationInput, query, id *string, recommended *bool) ([]*Product, error) {
+func (r *queryResolver) Product(ctx context.Context, pagination *PaginationInput, query, id *string, viewedProductIds []*string, byAccountId *bool) ([]*Product, error) {
 	if id != nil {
 		product, err := r.server.productClient.GetProduct(ctx, *id)
 		if err != nil {
@@ -69,25 +69,63 @@ func (r *queryResolver) Product(ctx context.Context, pagination *PaginationInput
 			},
 		}, nil
 	}
+
 	skip, take := uint64(0), uint64(10)
 	if pagination != nil {
 		skip, take = pagination.bounds()
 	}
 
 	// Get recommended products
-	if *recommended == true {
+	if viewedProductIds != nil {
+		productIds := make([]string, len(viewedProductIds))
+		for i, id := range viewedProductIds {
+			productIds[i] = *id
+		}
+		res, err := r.server.recommenderClient.GetRecommendationOnViews(ctx, productIds, skip, take)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		productList := res.GetRecommendedProducts()
+		var products []*Product
+		for _, product := range productList {
+			products = append(products,
+				&Product{
+					ID:          product.Id,
+					Name:        product.Name,
+					Description: product.Description,
+					Price:       product.Price,
+				},
+			)
+		}
+		return products, nil
+	}
+
+	if byAccountId != nil && *byAccountId == true {
 		accountId := account.GetUserId(ctx)
 		if accountId == "" {
 			return nil, errors.New("account ID not found")
 		}
-
-		recommendations, err := r.server.recommenderClient.GetRecommendation(ctx, accountId)
+		skip = 0
+		take = 100
+		res, err := r.server.recommenderClient.GetRecommendationForUserId(ctx, accountId, skip, take)
 		if err != nil {
+			log.Println(err)
 			return nil, err
 		}
-		if recommendations == nil {
-			return nil, errors.New("no recommendations found")
+		productList := res.GetRecommendedProducts()
+		var products []*Product
+		for _, product := range productList {
+			products = append(products,
+				&Product{
+					ID:          product.Id,
+					Name:        product.Name,
+					Description: product.Description,
+					Price:       product.Price,
+				},
+			)
 		}
+		return products, nil
 	}
 
 	q := ""

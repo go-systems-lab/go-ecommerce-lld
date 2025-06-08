@@ -82,28 +82,29 @@ func (x *ProductInteraction) GetInteractionType() string {
 	return ""
 }
 
-type RecommendationRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	UserId           string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	CurrentProductId string                 `protobuf:"bytes,2,opt,name=current_product_id,json=currentProductId,proto3" json:"current_product_id,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+type RecommendationRequestForUserId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Skip          uint64                 `protobuf:"varint,2,opt,name=skip,proto3" json:"skip,omitempty"`
+	Take          uint64                 `protobuf:"varint,3,opt,name=take,proto3" json:"take,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RecommendationRequest) Reset() {
-	*x = RecommendationRequest{}
+func (x *RecommendationRequestForUserId) Reset() {
+	*x = RecommendationRequestForUserId{}
 	mi := &file_recommender_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RecommendationRequest) String() string {
+func (x *RecommendationRequestForUserId) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RecommendationRequest) ProtoMessage() {}
+func (*RecommendationRequestForUserId) ProtoMessage() {}
 
-func (x *RecommendationRequest) ProtoReflect() protoreflect.Message {
+func (x *RecommendationRequestForUserId) ProtoReflect() protoreflect.Message {
 	mi := &file_recommender_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -115,23 +116,90 @@ func (x *RecommendationRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RecommendationRequest.ProtoReflect.Descriptor instead.
-func (*RecommendationRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use RecommendationRequestForUserId.ProtoReflect.Descriptor instead.
+func (*RecommendationRequestForUserId) Descriptor() ([]byte, []int) {
 	return file_recommender_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *RecommendationRequest) GetUserId() string {
+func (x *RecommendationRequestForUserId) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *RecommendationRequest) GetCurrentProductId() string {
+func (x *RecommendationRequestForUserId) GetSkip() uint64 {
 	if x != nil {
-		return x.CurrentProductId
+		return x.Skip
 	}
-	return ""
+	return 0
+}
+
+func (x *RecommendationRequestForUserId) GetTake() uint64 {
+	if x != nil {
+		return x.Take
+	}
+	return 0
+}
+
+type RecommendationRequestOnViews struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ids           []string               `protobuf:"bytes,1,rep,name=ids,proto3" json:"ids,omitempty"`
+	Skip          uint64                 `protobuf:"varint,2,opt,name=skip,proto3" json:"skip,omitempty"`
+	Take          uint64                 `protobuf:"varint,3,opt,name=take,proto3" json:"take,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecommendationRequestOnViews) Reset() {
+	*x = RecommendationRequestOnViews{}
+	mi := &file_recommender_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecommendationRequestOnViews) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecommendationRequestOnViews) ProtoMessage() {}
+
+func (x *RecommendationRequestOnViews) ProtoReflect() protoreflect.Message {
+	mi := &file_recommender_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecommendationRequestOnViews.ProtoReflect.Descriptor instead.
+func (*RecommendationRequestOnViews) Descriptor() ([]byte, []int) {
+	return file_recommender_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RecommendationRequestOnViews) GetIds() []string {
+	if x != nil {
+		return x.Ids
+	}
+	return nil
+}
+
+func (x *RecommendationRequestOnViews) GetSkip() uint64 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
+}
+
+func (x *RecommendationRequestOnViews) GetTake() uint64 {
+	if x != nil {
+		return x.Take
+	}
+	return 0
 }
 
 type ProductReplica struct {
@@ -146,7 +214,7 @@ type ProductReplica struct {
 
 func (x *ProductReplica) Reset() {
 	*x = ProductReplica{}
-	mi := &file_recommender_proto_msgTypes[2]
+	mi := &file_recommender_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -158,7 +226,7 @@ func (x *ProductReplica) String() string {
 func (*ProductReplica) ProtoMessage() {}
 
 func (x *ProductReplica) ProtoReflect() protoreflect.Message {
-	mi := &file_recommender_proto_msgTypes[2]
+	mi := &file_recommender_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -171,7 +239,7 @@ func (x *ProductReplica) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProductReplica.ProtoReflect.Descriptor instead.
 func (*ProductReplica) Descriptor() ([]byte, []int) {
-	return file_recommender_proto_rawDescGZIP(), []int{2}
+	return file_recommender_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ProductReplica) GetId() string {
@@ -211,7 +279,7 @@ type RecommendationResponse struct {
 
 func (x *RecommendationResponse) Reset() {
 	*x = RecommendationResponse{}
-	mi := &file_recommender_proto_msgTypes[3]
+	mi := &file_recommender_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -223,7 +291,7 @@ func (x *RecommendationResponse) String() string {
 func (*RecommendationResponse) ProtoMessage() {}
 
 func (x *RecommendationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recommender_proto_msgTypes[3]
+	mi := &file_recommender_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -236,7 +304,7 @@ func (x *RecommendationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecommendationResponse.ProtoReflect.Descriptor instead.
 func (*RecommendationResponse) Descriptor() ([]byte, []int) {
-	return file_recommender_proto_rawDescGZIP(), []int{3}
+	return file_recommender_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RecommendationResponse) GetRecommendedProducts() []*ProductReplica {
@@ -255,19 +323,25 @@ const file_recommender_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x02 \x01(\tR\tproductId\x12)\n" +
-	"\x10interaction_type\x18\x03 \x01(\tR\x0finteractionType\"^\n" +
-	"\x15RecommendationRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12,\n" +
-	"\x12current_product_id\x18\x02 \x01(\tR\x10currentProductId\"l\n" +
+	"\x10interaction_type\x18\x03 \x01(\tR\x0finteractionType\"a\n" +
+	"\x1eRecommendationRequestForUserId\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04skip\x18\x02 \x01(\x04R\x04skip\x12\x12\n" +
+	"\x04take\x18\x03 \x01(\x04R\x04take\"X\n" +
+	"\x1cRecommendationRequestOnViews\x12\x10\n" +
+	"\x03ids\x18\x01 \x03(\tR\x03ids\x12\x12\n" +
+	"\x04skip\x18\x02 \x01(\x04R\x04skip\x12\x12\n" +
+	"\x04take\x18\x03 \x01(\x04R\x04take\"l\n" +
 	"\x0eProductReplica\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x14\n" +
 	"\x05price\x18\x04 \x01(\x01R\x05price\"_\n" +
 	"\x16RecommendationResponse\x12E\n" +
-	"\x14recommended_products\x18\x01 \x03(\v2\x12.pb.ProductReplicaR\x13recommendedProducts2\xa6\x01\n" +
-	"\x12RecommenderService\x12K\n" +
-	"\x12GetRecommendations\x12\x19.pb.RecommendationRequest\x1a\x1a.pb.RecommendationResponse\x12C\n" +
+	"\x14recommended_products\x18\x01 \x03(\v2\x12.pb.ProductReplicaR\x13recommendedProducts2\x93\x02\n" +
+	"\x12RecommenderService\x12]\n" +
+	"\x1bGetRecommendationsForUserId\x12\".pb.RecommendationRequestForUserId\x1a\x1a.pb.RecommendationResponse\x12Y\n" +
+	"\x19GetRecommendationsOnViews\x12 .pb.RecommendationRequestOnViews\x1a\x1a.pb.RecommendationResponse\x12C\n" +
 	"\x11RecordInteraction\x12\x16.pb.ProductInteraction\x1a\x16.google.protobuf.EmptyB\x06Z\x04./pbb\x06proto3"
 
 var (
@@ -282,22 +356,25 @@ func file_recommender_proto_rawDescGZIP() []byte {
 	return file_recommender_proto_rawDescData
 }
 
-var file_recommender_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_recommender_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_recommender_proto_goTypes = []any{
-	(*ProductInteraction)(nil),     // 0: pb.ProductInteraction
-	(*RecommendationRequest)(nil),  // 1: pb.RecommendationRequest
-	(*ProductReplica)(nil),         // 2: pb.ProductReplica
-	(*RecommendationResponse)(nil), // 3: pb.RecommendationResponse
-	(*emptypb.Empty)(nil),          // 4: google.protobuf.Empty
+	(*ProductInteraction)(nil),             // 0: pb.ProductInteraction
+	(*RecommendationRequestForUserId)(nil), // 1: pb.RecommendationRequestForUserId
+	(*RecommendationRequestOnViews)(nil),   // 2: pb.RecommendationRequestOnViews
+	(*ProductReplica)(nil),                 // 3: pb.ProductReplica
+	(*RecommendationResponse)(nil),         // 4: pb.RecommendationResponse
+	(*emptypb.Empty)(nil),                  // 5: google.protobuf.Empty
 }
 var file_recommender_proto_depIdxs = []int32{
-	2, // 0: pb.RecommendationResponse.recommended_products:type_name -> pb.ProductReplica
-	1, // 1: pb.RecommenderService.GetRecommendations:input_type -> pb.RecommendationRequest
-	0, // 2: pb.RecommenderService.RecordInteraction:input_type -> pb.ProductInteraction
-	3, // 3: pb.RecommenderService.GetRecommendations:output_type -> pb.RecommendationResponse
-	4, // 4: pb.RecommenderService.RecordInteraction:output_type -> google.protobuf.Empty
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
+	3, // 0: pb.RecommendationResponse.recommended_products:type_name -> pb.ProductReplica
+	1, // 1: pb.RecommenderService.GetRecommendationsForUserId:input_type -> pb.RecommendationRequestForUserId
+	2, // 2: pb.RecommenderService.GetRecommendationsOnViews:input_type -> pb.RecommendationRequestOnViews
+	0, // 3: pb.RecommenderService.RecordInteraction:input_type -> pb.ProductInteraction
+	4, // 4: pb.RecommenderService.GetRecommendationsForUserId:output_type -> pb.RecommendationResponse
+	4, // 5: pb.RecommenderService.GetRecommendationsOnViews:output_type -> pb.RecommendationResponse
+	5, // 6: pb.RecommenderService.RecordInteraction:output_type -> google.protobuf.Empty
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -314,7 +391,7 @@ func file_recommender_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_recommender_proto_rawDesc), len(file_recommender_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

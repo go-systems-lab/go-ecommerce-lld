@@ -29,11 +29,24 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *Client) GetRecommendation(ctx context.Context, userID string) (*pb.RecommendationResponse, error) {
-	return c.service.GetRecommendations(
+func (c *Client) GetRecommendationForUserId(ctx context.Context, userID string, skip uint64, take uint64) (*pb.RecommendationResponse, error) {
+	return c.service.GetRecommendationsForUserId(
 		ctx,
-		&pb.RecommendationRequest{
+		&pb.RecommendationRequestForUserId{
 			UserId: userID,
+			Skip:   skip,
+			Take:   take,
+		},
+	)
+}
+
+func (c *Client) GetRecommendationOnViews(ctx context.Context, ids []string, skip uint64, take uint64) (*pb.RecommendationResponse, error) {
+	return c.service.GetRecommendationsOnViews(
+		ctx,
+		&pb.RecommendationRequestOnViews{
+			Ids:  ids,
+			Skip: skip,
+			Take: take,
 		},
 	)
 }
